@@ -25,6 +25,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -74,6 +76,7 @@ import org.kohsuke.stapler.StaplerResponse;
 public class Plot implements Comparable<Plot> {
     private static final Logger LOGGER = Logger.getLogger(Plot.class.getName());
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("MMM d");
+	private static final int MAX_HISTORY_ENTRIES = 2000;
 
     /**
      * Effectively a 2-dimensional array, where each row is the
@@ -299,6 +302,17 @@ public class Plot implements Comparable<Plot> {
     public String getNumBuilds() {
         return numBuilds;
     }
+	
+	private int getHistoryLength() {
+		int historyLength;
+        try {
+            historyLength = Integer.parseInt(getURLNumBuilds());
+        } catch (NumberFormatException nfe) {
+            LOGGER.log(Level.SEVERE, "Exception converting to integer", nfe);
+            historyLength = Integer.MAX_VALUE;
+        }
+		return historyLength;
+	}
 
     /**
      * Sets the right-most build number shown on the plot from
@@ -456,6 +470,7 @@ public class Plot implements Comparable<Plot> {
 
         // load the existing plot data from disk
         loadPlotData();
+		rawPlotData.clear();
         // extract the data for each data series
         for (Series series : getSeries()) {
         	if (series == null)
@@ -480,6 +495,7 @@ public class Plot implements Comparable<Plot> {
         // save the updated plot data to disk
         savePlotData();
     }
+
 
     /**
      * Generates the plot and stores it in the plot instance variable.
@@ -537,6 +553,12 @@ public class Plot implements Comparable<Plot> {
         //LOGGER.info("Generating plot " + getCsvFileName());
         csvLastModification = csvFile.lastModified();
         PlotCategoryDataset dataset = new PlotCategoryDataset();
+
+		Map<String, Integer> xAxisIds = new HashMap<String, Integer>();
+		int serie = 0;
+		int lastBuildNum = -1;
+		String buildLabel = "";
+
         for (String[] record : rawPlotData) {
             // record: series y-value, series label, build number, build date, url
             int buildNum;
@@ -550,6 +572,11 @@ public class Plot implements Comparable<Plot> {
                   LOGGER.log(Level.SEVERE, "Exception converting to integer", nfe);
                   continue; // skip this record all together
             }
+			
+			buildLabel = (buildNum != lastBuildNum) ? "#" + buildNum : "";
+			lastBuildNum = buildNum;
+			
+			
             Number value = null;
             try {
                 value = Integer.valueOf(record[0]);
@@ -561,22 +588,24 @@ public class Plot implements Comparable<Plot> {
                     continue; // skip this record all together
                 }
             }
-            String series = record[1];
-            Label xlabel = getUrlUseDescr()
-                    ? new Label(record[2], record[3], descriptionForBuild(buildNum))
-                    : new Label(record[2], record[3]);
+			
+			String series = record[1];
+			
+			if (!xAxisIds.containsKey(series)) {
+				xAxisIds.put(series, 0);
+			}
+			int id = xAxisIds.get(series);
+			String idStr = String.valueOf(xAxisIds.get(series));
+			
+			String serieNum = String.valueOf(++serie);
+            Label xlabel = new Label(idStr, record[3], buildLabel);
             String url = null;
             if (record.length >= 5) url = record[4];
             dataset.setValue(value, url, series, xlabel);
+			xAxisIds.put(series, ++id);
         }
-        int numBuilds;
-        try {
-            numBuilds = Integer.parseInt(getURLNumBuilds());
-        } catch (NumberFormatException nfe) {
-            LOGGER.log(Level.SEVERE, "Exception converting to integer", nfe);
-            numBuilds = Integer.MAX_VALUE;
-        }
-        dataset.clipDataset(numBuilds);
+        
+        dataset.clipDataset(getHistoryLength());
         plot = createChart(dataset);
         CategoryPlot categoryPlot = (CategoryPlot) plot.getPlot();
         categoryPlot.setDomainGridlinePaint(Color.black);
@@ -723,6 +752,12 @@ public class Plot implements Comparable<Plot> {
     private void savePlotData() {
         File plotFile = new File(project.getRootDir(),getCsvFileName());
         CSVWriter writer = null;
+		
+		int oversized = rawPlotData.size() - MAX_HISTORY_ENTRIES;
+		if (oversized > 0) {
+			rawPlotData = rawPlotData.subList(oversized, rawPlotData.size());
+		}
+		
         try {
             writer = new CSVWriter(new FileWriter(plotFile));
             // write 2 header lines

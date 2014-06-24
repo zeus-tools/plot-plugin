@@ -63,7 +63,7 @@ public class PlotCategoryDataset extends AbstractDataset implements CategoryData
 	 *        be in the dataset.
 	 */
 	public void clipDataset(int maxColumns) {
-		this.maxColumns = maxColumns;
+		this.maxColumns = columnKeys.size();
 		// Columns are lazily truncated when the data is queried.
 		// Rows that contain no data when the columns are truncated are
 		// removed here so that they don't show up in plot legends.
