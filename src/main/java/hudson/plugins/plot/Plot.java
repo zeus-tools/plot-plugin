@@ -27,6 +27,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -470,7 +472,7 @@ public class Plot implements Comparable<Plot> {
 
         // load the existing plot data from disk
         loadPlotData();
-		rawPlotData.clear();
+//		rawPlotData.clear();
         // extract the data for each data series
         for (Series series : getSeries()) {
         	if (series == null)
@@ -559,8 +561,22 @@ public class Plot implements Comparable<Plot> {
 		int lastBuildNum = -1;
 		String buildLabel = "";
 
+		final Set<String> buildsSet = new HashSet<String>();
+		for (String[] record : rawPlotData) {
+			final String buildNumStr = record[2];
+			buildsSet.add(buildNumStr);
+		}
+		int buildsToSklep = buildsSet.size() - getHistoryLength();
+		buildsSet.clear();
+		
         for (String[] record : rawPlotData) {
             // record: series y-value, series label, build number, build date, url
+			final String buildNumStr = record[2];
+			buildsSet.add(buildNumStr);
+			if (buildsSet.size() <= buildsToSklep) {
+				continue;
+			}
+			
             int buildNum;
             try {
                 buildNum = Integer.valueOf(record[2]);
