@@ -1,4 +1,4 @@
-package hudson.plugins.plot;
+package hudson.plugins.extended_plot;
 
 import hudson.Util;
 import hudson.tasks.BuildStepMonitor;

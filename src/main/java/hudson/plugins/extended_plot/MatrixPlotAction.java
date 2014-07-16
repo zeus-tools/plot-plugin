@@ -1,4 +1,4 @@
-package hudson.plugins.plot;
+package hudson.plugins.extended_plot;
 
 import hudson.matrix.MatrixConfiguration;
 import hudson.model.AbstractProject;

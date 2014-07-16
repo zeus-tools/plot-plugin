@@ -3,7 +3,7 @@
  * The copyrights to the contents of this file are licensed under the MIT License (http://www.opensource.org/licenses/mit-license.php)
  */
 
-package hudson.plugins.plot;
+package hudson.plugins.extended_plot;
 
 import java.util.ArrayList;
 import java.util.List;

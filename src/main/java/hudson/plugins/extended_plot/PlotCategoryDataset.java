@@ -2,7 +2,7 @@
  * Copyright (c) 2007 Yahoo! Inc.  All rights reserved.
  * Copyrights licensed under the MIT License.
  */
-package hudson.plugins.plot;
+package hudson.plugins.extended_plot;
 
 import java.util.ArrayList;
 import java.util.HashMap;
