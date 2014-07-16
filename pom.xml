@@ -6,9 +6,9 @@
     <version>1.532.1</version>
   </parent>
   
-  <artifactId>plot</artifactId>
+  <artifactId>extended-plot</artifactId>
   <packaging>hpi</packaging>
-  <name>Plot plugin</name>
+  <name>Extended plot plugin</name>
   <version>1.8-SNAPSHOT</version>
   <url>http://wiki.jenkins-ci.org/display/JENKINS/Plot+Plugin</url>
 
